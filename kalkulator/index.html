@@ -5,39 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalkulator Kuchenny</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin-top: 0; color: #2c3e50; font-size: 1.2rem; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        .result { background: #e8f4fd; padding: 10px; border-radius: 8px; font-weight: bold; color: #2980b9; margin-top: 5px; }
-        button { width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 10px; }
-        button:active { background: #2ecc71; }
-        .history-item { border-bottom: 1px solid #eee; padding: 10px 0; font-size: 0.9rem; }
-        .history-date { color: #888; font-size: 0.75rem; }
-        .delete-btn { background: #e74c3c; padding: 5px 10px; font-size: 0.8rem; width: auto; margin-top: 5px; }
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 15px; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: #2c3e50; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { font-size: 0.9rem; font-weight: bold; color: #7f8c8d; }
+        input { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1.1rem; }
+        input:focus { border-color: #3498db; outline: none; }
+        
+        /* STYLIZACJA WYNIKÓW */
+        .result-container { margin-bottom: 20px; }
+        .result-label { font-size: 0.85rem; margin-bottom: 4px; display: block; }
+        .result-value { 
+            background: #2c3e50; 
+            color: #2ecc71; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            font-size: 1.8rem; 
+            text-align: center;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            border: 2px solid #27ae60;
+        }
+
+        button { width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        button:active { background: #2ecc71; transform: scale(0.98); }
+        
+        /* STYLIZACJA HISTORII */
+        .history-item { border-bottom: 1px solid #eee; padding: 15px 0; font-size: 0.95rem; }
+        .history-item:last-child { border-bottom: none; }
+        .history-name { font-size: 1.1rem; color: #2c3e50; display: block; margin-bottom: 5px; }
+        .history-details { color: #555; line-height: 1.4; }
+        .history-results { color: #27ae60; font-weight: bold; margin-top: 5px; display: block; }
+        .history-date { color: #aaa; font-size: 0.75rem; margin-top: 5px; display: block; }
+        
+        .delete-btn { background: #e74c3c; padding: 10px; font-size: 0.9rem; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h2>Nowe obliczenie</h2>
-        <input type="text" id="dishName" placeholder="Nazwa dania (np. Ryż z kurczakiem)">
+        <label>Nazwa dania:</label>
+        <input type="text" id="dishName" placeholder="np. Ryż z kurczakiem">
         
         <label>Waga gotowego dania (g):</label>
         <input type="number" id="totalWeight" placeholder="np. 1250" oninput="calculate()">
-        <div id="res1" class="result">Wynik (Waga/100): -</div>
+        <div class="result-container">
+            <span class="result-label">Waga / 100 (zaokr. w górę):</span>
+            <div id="res1" class="result-value">-</div>
+        </div>
 
         <label>Ile chcesz zjeść (g):</label>
         <input type="number" id="portionWeight" placeholder="np. 350" oninput="calculate()">
-        <div id="res2" class="result">Wynik (Porcja/10): -</div>
+        <div class="result-container">
+            <span class="result-label">Twoja porcja / 10:</span>
+            <div id="res2" class="result-value">-</div>
+        </div>
 
-        <button onclick="saveToHistory()">Zapisz w historii</button>
+        <button onclick="saveToHistory()">ZAPISZ W HISTORII</button>
     </div>
 
     <div class="card">
         <h2>Historia</h2>
         <div id="historyList"></div>
-        <button class="delete-btn" onclick="clearHistory()">Wyczyść historię</button>
+        <button class="delete-btn" onclick="clearHistory()">WYCZYŚĆ HISTORIĘ</button>
     </div>
 
     <script>
@@ -45,14 +76,18 @@
             const total = document.getElementById('totalWeight').value;
             const portion = document.getElementById('portionWeight').value;
 
-            if (total) {
-                const res1 = Math.ceil(total / 100);
-                document.getElementById('res1').innerText = `Wynik (Waga/100): ${res1}`;
+            if (total && total > 0) {
+                const val1 = Math.ceil(total / 100);
+                document.getElementById('res1').innerText = val1;
+            } else {
+                document.getElementById('res1').innerText = "-";
             }
 
-            if (portion) {
-                const res2 = (portion / 10);
-                document.getElementById('res2').innerText = `Wynik (Porcja/10): ${res2}`;
+            if (portion && portion > 0) {
+                const val2 = (portion / 10);
+                document.getElementById('res2').innerText = val2;
+            } else {
+                document.getElementById('res2').innerText = "-";
             }
         }
 
@@ -62,19 +97,24 @@
             const portion = document.getElementById('portionWeight').value;
             
             if (!total || !portion) {
-                alert("Wpisz wagę!");
+                alert("Wpisz obie wagi!");
                 return;
             }
 
+            const res1 = Math.ceil(total / 100);
+            const res2 = (portion / 10);
+
             const historyItem = {
                 name: name,
-                res1: Math.ceil(total / 100),
-                res2: (portion / 10),
-                date: new Date().toLocaleString()
+                total: total,
+                portion: portion,
+                res1: res1,
+                res2: res2,
+                date: new Date().toLocaleString('pl-PL')
             };
 
             let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-            history.unshift(historyItem); // Dodaj na początek listy
+            history.unshift(historyItem);
             localStorage.setItem('calcHistory', JSON.stringify(history));
             
             renderHistory();
@@ -83,28 +123,38 @@
             document.getElementById('dishName').value = "";
             document.getElementById('totalWeight').value = "";
             document.getElementById('portionWeight').value = "";
+            document.getElementById('res1').innerText = "-";
+            document.getElementById('res2').innerText = "-";
         }
 
         function renderHistory() {
             const history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
             const list = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                list.innerHTML = "<p style='color: #888; text-align: center;'>Brak wpisów</p>";
+                return;
+            }
+
             list.innerHTML = history.map(item => `
                 <div class="history-item">
-                    <strong>${item.name}</strong><br>
-                    Waga/100: ${item.res1} | Porcja/10: ${item.res2}<br>
+                    <strong class="history-name">${item.name}</strong>
+                    <div class="history-details">
+                        Waga całego: ${item.total}g → <strong>${item.res1}</strong><br>
+                        Twoja porcja: ${item.portion}g → <strong>${item.res2}</strong>
+                    </div>
                     <span class="history-date">${item.date}</span>
                 </div>
             `).join('');
         }
 
         function clearHistory() {
-            if(confirm("Czy na pewno wyczyścić historię?")) {
+            if(confirm("Czy na pewno wyczyścić całą historię?")) {
                 localStorage.removeItem('calcHistory');
                 renderHistory();
             }
         }
 
-        // Ładuj historię przy starcie
         renderHistory();
     </script>
 </body>
