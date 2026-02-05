@@ -3,93 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer Pro</title>
+    <title>Timer Pro Max</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db">
     <style>
         :root { --bg: #f0f2f5; --card: #ffffff; --primary: #3498db; --danger: #ff4757; --text: #2f3542; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
-        
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        
-        h2 { margin: 0 0 15px 0; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
-        
+        h2 { margin: 0 0 15px 0; font-size: 1.25rem; color: var(--primary); }
         .input-group { margin-bottom: 15px; }
         label { font-size: 0.85rem; font-weight: 600; color: #57606f; display: block; margin-bottom: 6px; }
-        input { 
-            width: 100%; padding: 14px; border: 2px solid #edeff2; border-radius: 10px; 
-            font-size: 1rem; box-sizing: border-box; transition: border-color 0.2s; background: #fafafa;
-        }
-        input:focus { border-color: var(--primary); outline: none; background: #fff; }
-
-        .btn { 
-            width: 100%; padding: 16px; border: none; border-radius: 12px; 
-            font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; 
-        }
+        input { width: 100%; padding: 14px; border: 2px solid #edeff2; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .btn-main { background: var(--primary); color: white; margin-top: 10px; }
-        .btn-main:active { transform: scale(0.98); background: #2980b9; }
-        .btn-notif { background: #eccc68; color: #2f3542; padding: 10px; font-size: 0.8rem; margin-bottom: 15px; }
-
-        /* LISTA TIMERÓW */
-        .timer-card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e1e4e8; }
-        .timer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
-        .timer-name { font-weight: 700; font-size: 1.1rem; color: var(--text); overflow-wrap: break-word; flex-grow: 1; }
-        .btn-delete { background: #fee2e2; color: var(--danger); border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
-
-        .timer-body { text-align: center; padding: 10px 0; background: #f8fafc; border-radius: 10px; margin-bottom: 10px; }
-        .timer-countdown { font-family: 'Monaco', 'Consolas', monospace; font-size: 2rem; font-weight: 800; color: var(--danger); }
-        .timer-footer { font-size: 0.75rem; color: #747d8c; display: flex; justify-content: space-between; }
-        
+        .btn-notif { background: #eccc68; color: #2f3542; margin-bottom: 15px; font-size: 0.8rem; }
+        .timer-card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #e1e4e8; position: relative; }
+        .btn-delete { position: absolute; right: 10px; top: 10px; background: #fee2e2; color: var(--danger); border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; }
+        .timer-name { font-weight: 700; font-size: 1.1rem; display: block; margin-bottom: 10px; width: 80%; }
+        .timer-countdown { font-family: monospace; font-size: 2rem; font-weight: 800; color: var(--danger); text-align: center; background: #f8fafc; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
         .status-done { color: #2ed573 !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <button id="notifBtn" class="btn btn-notif" onclick="requestNotif()">🔔 WŁĄCZ POWIADOMIENIA I TESTUJ</button>
+    <button id="notifBtn" class="btn btn-notif" onclick="initApp()">🔔 KLIKNIJ, ABY AKTYWOWAĆ POWIADOMIENIA</button>
 
     <div class="card">
         <h2>Nowy Timer</h2>
         <div class="input-group">
-            <label>Co planujesz?</label>
-            <input type="text" id="eventName" placeholder="np. Wyjęcie kurczaka z pieca">
+            <label>Nazwa:</label>
+            <input type="text" id="eventName" placeholder="np. Serial o 20:00">
         </div>
-        
         <div class="input-group">
             <label>Data i godzina:</label>
             <input type="datetime-local" id="targetTime">
         </div>
-
         <div class="input-group">
-            <label>Przypomnij wcześniej (minuty):</label>
-            <input type="number" id="remindBefore" value="15" min="0">
+            <label>Przypomnij wcześniej (min):</label>
+            <input type="number" id="remindBefore" value="15">
         </div>
-
         <button class="btn btn-main" onclick="addTimer()">DODAJ LICZNIK</button>
     </div>
 
     <div id="timersList"></div>
 </div>
-navigator.serviceWorker.register('sw.js');
-<script>
-    let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
 
-    function requestNotif() {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-                document.getElementById('notifBtn').innerText = "✅ POWIADOMIENIA AKTYWNE";
-                document.getElementById('notifBtn').style.background = "#2ed573";
-                // Testowy strzał
-                setTimeout(() => {
-                    new Notification("Timer Pro", { body: "Testowe powiadomienie działa!", icon: "timer-icon.png" });
-                }, 2000);
+<script>
+    // Rejestracja Service Workera
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
+    }
+
+    let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function initApp() {
+        Notification.requestPermission().then(perm => {
+            if (perm === "granted") {
+                document.getElementById('notifBtn').style.display = 'none';
+                // Beep testowy - odblokowuje audio na telefonie
+                playBeep(440, 0.2);
+                new Notification("Timer Pro", { body: "Powiadomienia aktywne!" });
             }
         });
     }
 
-    if (Notification.permission === "granted") {
-        document.getElementById('notifBtn').style.display = 'none';
+    function playBeep(freq, duration) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
     }
 
     function addTimer() {
@@ -97,21 +85,13 @@ navigator.serviceWorker.register('sw.js');
         const time = document.getElementById('targetTime').value;
         const remindBefore = parseInt(document.getElementById('remindBefore').value) || 0;
 
-        if (!time) { alert("Wybierz czas!"); return; }
+        if (!time) return alert("Wybierz czas!");
 
         timers.push({ 
-            id: Date.now(), 
-            name, 
-            target: time, 
-            remindBefore, 
-            notifiedRemind: false, 
-            notifiedFinal: false 
+            id: Date.now(), name, target: time, remindBefore, 
+            notifiedRemind: false, notifiedFinal: false 
         });
-        
         localStorage.setItem('myTimers', JSON.stringify(timers));
-        
-        document.getElementById('eventName').value = "";
-        document.getElementById('targetTime').value = "";
         renderTimers();
     }
 
@@ -121,13 +101,7 @@ navigator.serviceWorker.register('sw.js');
         renderTimers();
     }
 
-    function sendNotification(title, body) {
-        if (Notification.permission === "granted") {
-            const n = new Notification(title, { body, icon: "timer-icon.png", vibrate: [200, 100, 200] });
-        }
-    }
-
-    function updateCountdowns() {
+    function checkTimers() {
         const now = new Date().getTime();
         let changed = false;
 
@@ -136,14 +110,18 @@ navigator.serviceWorker.register('sw.js');
             const diff = target - now;
             const remindMs = t.remindBefore * 60 * 1000;
 
+            // Przypomnienie "wcześniej"
             if (diff <= remindMs && diff > 0 && !t.notifiedRemind && t.remindBefore > 0) {
-                sendNotification(`Za ${t.remindBefore} min: ${t.name}`, `Szykuj się!`);
+                new Notification(`Za ${t.remindBefore} min: ${t.name}`, { body: "Szykuj się!" });
+                playBeep(660, 0.5);
                 t.notifiedRemind = true;
                 changed = true;
             }
 
+            // Powiadomienie końcowe
             if (diff <= 0 && !t.notifiedFinal) {
-                sendNotification(`KONIEC CZASU!`, `Wydarzenie: ${t.name}`);
+                new Notification("KONIEC CZASU!", { body: `Wydarzenie: ${t.name}`, requireInteraction: true });
+                playBeep(880, 1);
                 t.notifiedFinal = true;
                 changed = true;
             }
@@ -167,30 +145,18 @@ navigator.serviceWorker.register('sw.js');
 
     function renderTimers() {
         const list = document.getElementById('timersList');
-        if (timers.length === 0) {
-            list.innerHTML = `<p style="text-align:center; color:#a4b0be; margin-top:20px;">Brak aktywnych liczników</p>`;
-            return;
-        }
-
         list.innerHTML = timers.map(t => `
             <div class="timer-card">
-                <div class="timer-header">
-                    <span class="timer-name">${t.name}</span>
-                    <button class="btn-delete" onclick="deleteTimer(${t.id})">USUŃ</button>
-                </div>
-                <div class="timer-body">
-                    <div class="timer-countdown" id="count-${t.id}">--:--:--</div>
-                </div>
-                <div class="timer-footer">
-                    <span>Cel: ${t.target.replace('T', ' ')}</span>
-                    <span>Dzwonek: -${t.remindBefore}m</span>
-                </div>
+                <button class="btn-delete" onclick="deleteTimer(${t.id})">USUŃ</button>
+                <span class="timer-name">${t.name}</span>
+                <div class="timer-countdown" id="count-${t.id}">--:--:--</div>
+                <div style="font-size:0.7rem; color:#999">Cel: ${t.target.replace('T', ' ')}</div>
             </div>
         `).join('');
     }
 
+    setInterval(checkTimers, 1000);
     renderTimers();
-    setInterval(updateCountdowns, 1000);
 </script>
 </body>
 </html>
