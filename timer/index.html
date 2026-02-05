@@ -71,7 +71,7 @@
 
     <div id="timersList"></div>
 </div>
-
+navigator.serviceWorker.register('sw.js');
 <script>
     let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
 
