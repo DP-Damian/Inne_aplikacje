@@ -3,52 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator Fitatu v2</title>
+    <title>Kalkulator Fitatu</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; background: #f4f7f6; padding: 15px; color: #333; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 400px; }
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 15px; color: #333; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin-bottom: 15px; color: #2c3e50; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        label { font-size: 0.8rem; font-weight: bold; color: #7f8c8d; display: block; margin-top: 10px; }
+        h2 { margin-top: 0; color: #2c3e50; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { font-size: 0.9rem; font-weight: bold; color: #7f8c8d; display: block; margin-top: 10px; }
         
-        input, select { 
-            width: 100%; padding: 12px; margin-top: 5px; 
-            border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; background: white; 
+        input[type="text"], input[type="number"], select { 
+            width: 100%; padding: 12px; margin: 5px 0 15px 0; 
+            border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; background: white; 
         }
         
-        .pot-toggle { display: flex; align-items: center; gap: 10px; margin: 15px 0; background: #f9f9f9; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+        .pot-toggle { display: flex; align-items: center; gap: 10px; margin: 15px 0; background: #f9f9f9; padding: 10px; border-radius: 8px; cursor: pointer; }
         #potSection { display: none; background: #f0f4f7; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3498db; }
 
-        .result-container { margin: 15px 0; }
-        .result-label { font-size: 0.75rem; font-weight: bold; color: #2c3e50; text-transform: uppercase; }
-        .result-value { background: #2c3e50; color: #2ecc71; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.6rem; text-align: center; border: 2px solid #27ae60; margin-top: 5px; }
-
-        button { width: 100%; border: none; padding: 15px; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .result-container { margin-bottom: 20px; }
+        .result-label { font-size: 0.8rem; margin-bottom: 4px; display: block; font-weight: bold; color: #2c3e50; text-transform: uppercase; }
+        .result-value { background: #2c3e50; color: #2ecc71; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.8rem; text-align: center; border: 2px solid #27ae60; }
+        
+        button { width: 100%; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-save { background: #27ae60; color: white; }
+        .btn-save:active { background: #2ecc71; }
         
-        /* Historia */
-        .history-item { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .history-name { font-size: 1rem; font-weight: bold; color: #2c3e50; display: block; margin-bottom: 5px; }
-        .history-details { color: #555; font-size: 0.85rem; line-height: 1.4; }
-        .res-highlight { color: #27ae60; font-weight: bold; }
+        .history-item { border-bottom: 1px solid #eee; padding: 15px 0; font-size: 0.95rem; }
+        .history-name { font-size: 1.1rem; color: #2c3e50; display: block; margin-bottom: 5px; font-weight: bold; }
+        .history-details { color: #555; line-height: 1.5; font-size: 0.9rem; }
+        .history-results { color: #27ae60; font-weight: bold; }
         
-        .action-buttons { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-edit { background: #f39c12; color: white; padding: 8px; font-size: 0.8rem; flex: 1; }
-        .btn-del { background: #e74c3c; color: white; padding: 8px; font-size: 0.8rem; flex: 1; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-edit { background: #f39c12; color: white; flex: 1; padding: 10px; font-size: 0.9rem; border-radius: 6px; }
+        .btn-del { background: #e74c3c; color: white; flex: 1; padding: 10px; font-size: 0.9rem; border-radius: 6px; }
     </style>
 </head>
 <body>
 
-<div class="container">
     <div class="card">
         <h2>Kalkulator Fitatu</h2>
-        
         <label>Nazwa dania:</label>
-        <input type="text" id="dishName" placeholder="np. Leczo">
+        <input type="text" id="dishName" placeholder="np. Kurczak ryż">
         
-        <label>Waga całości (g):</label>
-        <input type="number" id="totalWeight" oninput="calculate()">
+        <label>Waga całości (z wagi):</label>
+        <input type="number" id="totalWeight" placeholder="g" oninput="calculate()">
 
         <label class="pot-toggle">
             <input type="checkbox" id="usePot" onchange="togglePotSection()"> 
@@ -61,15 +58,15 @@
         </div>
         
         <div class="result-container">
-            <span class="result-label">PORCJE W DANIU (DLA FITATU):</span>
+            <span class="result-label">ILOŚĆ PORCJI W DANIU:</span>
             <div id="res1" class="result-value">-</div>
         </div>
 
         <label>Ile nakładasz sobie (g):</label>
-        <input type="number" id="portionWeight" oninput="calculate()">
-
+        <input type="number" id="portionWeight" placeholder="g" oninput="calculate()">
+        
         <div class="result-container">
-            <span class="result-label">WPISZ W "PORCJE" PRZY POSIŁKU:</span>
+            <span class="result-label">WPISZ W PORCJE (FITATU):</span>
             <div id="res2" class="result-value">-</div>
         </div>
 
@@ -80,137 +77,135 @@
         <h2>Historia</h2>
         <div id="historyList"></div>
     </div>
-</div>
 
-<script>
-    const MOJE_GARNKI = [
-        { nazwa: "Patelnia WOK", waga: 850 },
-        { nazwa: "Garnek 6L", waga: 1200 },
-        { nazwa: "Rondel", waga: 450 },
-        { nazwa: "Miska", waga: 300 }
-    ];
+    <script>
+        const MOJE_GARNKI = [
+            { nazwa: "Patelnia WOK", waga: 850 },
+            { nazwa: "Garnek Duży (6L)", waga: 1200 },
+            { nazwa: "Rondel mały", waga: 450 },
+            { nazwa: "Naczynie żaroodporne", waga: 1100 },
+            { nazwa: "Miska metalowa", waga: 300 }
+        ];
 
-    // Wypełnianie listy garnków
-    const select = document.getElementById('potSelect');
-    MOJE_GARNKI.forEach(g => {
-        let opt = document.createElement('option');
-        opt.value = g.waga;
-        opt.text = `${g.nazwa} (${g.waga}g)`;
-        select.add(opt);
-    });
+        const select = document.getElementById('potSelect');
+        MOJE_GARNKI.forEach((g) => {
+            let opt = document.createElement('option');
+            opt.value = g.waga;
+            opt.text = `${g.nazwa} (${g.waga}g)`;
+            select.add(opt);
+        });
 
-    function togglePotSection() {
-        document.getElementById('potSection').style.display = document.getElementById('usePot').checked ? 'block' : 'none';
-        calculate();
-    }
-
-    function calculate() {
-        const total = parseFloat(document.getElementById('totalWeight').value) || 0;
-        const portion = parseFloat(document.getElementById('portionWeight').value) || 0;
-        const usePot = document.getElementById('usePot').checked;
-        const potW = parseFloat(document.getElementById('potSelect').value) || 0;
-
-        let netto = usePot ? total - potW : total;
-        
-        document.getElementById('res1').innerText = netto > 0 ? Math.ceil(netto / 10) : "-";
-        document.getElementById('res2').innerText = portion > 0 ? (portion / 10).toFixed(1) : "-";
-    }
-
-    function saveToHistory() {
-        const name = document.getElementById('dishName').value || "Bez nazwy";
-        const total = document.getElementById('totalWeight').value;
-        const portion = document.getElementById('portionWeight').value;
-        const res1 = document.getElementById('res1').innerText;
-        const res2 = document.getElementById('res2').innerText;
-        const usePot = document.getElementById('usePot').checked;
-        const potVal = document.getElementById('potSelect').value;
-
-        if (!total || !portion || res1 === "-") return alert("Uzupełnij dane!");
-
-        let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-        
-        const newItem = {
-            id: Date.now().toString(), // ID jako string dla pewności
-            name, total, portion, res1, res2, usePot, potVal,
-            date: new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})
-        };
-
-        history.unshift(newItem);
-        localStorage.setItem('calcHistory', JSON.stringify(history));
-        
-        // Reset formularza
-        document.getElementById('dishName').value = "";
-        document.getElementById('totalWeight').value = "";
-        document.getElementById('portionWeight').value = "";
-        document.getElementById('usePot').checked = false;
-        togglePotSection();
-        renderHistory();
-    }
-
-    function editItem(id) {
-        let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-        // Szukamy po ID (używamy == żeby zignorować typ string/number)
-        const item = history.find(i => i.id == id);
-
-        if (item) {
-            // 1. Wpisujemy dane z powrotem do pól
-            document.getElementById('dishName').value = item.name;
-            document.getElementById('totalWeight').value = item.total;
-            document.getElementById('portionWeight').value = item.portion;
-            
-            // 2. Obsługa garnka
-            const check = document.getElementById('usePot');
-            check.checked = item.usePot;
-            document.getElementById('potSelect').value = item.potVal || MOJE_GARNKI[0].waga;
-            togglePotSection();
-
-            // 3. Przeliczamy wyniki
+        function togglePotSection() {
+            document.getElementById('potSection').style.display = document.getElementById('usePot').checked ? 'block' : 'none';
             calculate();
+        }
 
-            // 4. Usuwamy stary wpis z listy
-            deleteItem(id, false);
+        function calculate() {
+            const total = parseFloat(document.getElementById('totalWeight').value) || 0;
+            const portion = parseFloat(document.getElementById('portionWeight').value) || 0;
+            const usePot = document.getElementById('usePot').checked;
+            const potW = parseFloat(document.getElementById('potSelect').value) || 0;
+
+            let netto = usePot ? total - potW : total;
+
+            document.getElementById('res1').innerText = netto > 0 ? Math.ceil(netto / 10) : "-";
+            document.getElementById('res2').innerText = portion > 0 ? (portion / 10).toFixed(1) : "-";
+        }
+
+        function saveToHistory() {
+            const name = document.getElementById('dishName').value || "Bez nazwy";
+            const total = document.getElementById('totalWeight').value;
+            const portion = document.getElementById('portionWeight').value;
+            const res1 = document.getElementById('res1').innerText;
+            const res2 = document.getElementById('res2').innerText;
+            const usePot = document.getElementById('usePot').checked;
+            const potVal = document.getElementById('potSelect').value;
+
+            if (!total || !portion || res1 === "-") {
+                alert("Uzupełnij wagi!");
+                return;
+            }
+
+            let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
             
-            // 5. Scroll na górę, żeby widzieć co edytujemy
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-            alert("Nie znaleziono wpisu!");
-        }
-    }
+            // Tworzymy unikalne ID na bazie czasu
+            const newItem = {
+                id: Date.now(),
+                name, total, portion, res1, res2, usePot, potVal
+            };
 
-    function deleteItem(id, ask = true) {
-        if (ask && !confirm("Usunąć wpis?")) return;
-        let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-        history = history.filter(i => i.id != id);
-        localStorage.setItem('calcHistory', JSON.stringify(history));
+            history.unshift(newItem);
+            localStorage.setItem('calcHistory', JSON.stringify(history));
+            
+            // Resetuj pola
+            document.getElementById('dishName').value = "";
+            document.getElementById('totalWeight').value = "";
+            document.getElementById('portionWeight').value = "";
+            document.getElementById('usePot').checked = false;
+            togglePotSection();
+            renderHistory();
+        }
+
+        function editItem(id) {
+            let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
+            // Znajdź wpis po ID
+            const item = history.find(x => x.id === id);
+
+            if (item) {
+                // Wstaw dane do pól
+                document.getElementById('dishName').value = item.name;
+                document.getElementById('totalWeight').value = item.total;
+                document.getElementById('portionWeight').value = item.portion;
+                document.getElementById('usePot').checked = item.usePot;
+                document.getElementById('potSelect').value = item.potVal || 850;
+                
+                togglePotSection();
+                calculate();
+
+                // Usuń stary wpis z historii
+                history = history.filter(x => x.id !== id);
+                localStorage.setItem('calcHistory', JSON.stringify(history));
+                
+                renderHistory();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                alert("Błąd edycji!");
+            }
+        }
+
+        function deleteItem(id) {
+            if (!confirm("Usunąć?")) return;
+            let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
+            history = history.filter(x => x.id !== id);
+            localStorage.setItem('calcHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
+            
+            if (history.length === 0) {
+                list.innerHTML = "<p style='color:#999; text-align:center;'>Brak wpisów</p>";
+                return;
+            }
+
+            list.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <span class="history-name">${item.name}</span>
+                    <div class="history-details">
+                        Całość: ${item.total}g → Porcje: <span class="history-results">${item.res1}</span><br>
+                        Twoja porcja: ${item.portion}g → W Fitatu: <span class="history-results">${item.res2}</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="editItem(${item.id})">EDYTUJ</button>
+                        <button class="btn-del" onclick="deleteItem(${item.id})">USUŃ</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         renderHistory();
-    }
-
-    function renderHistory() {
-        const list = document.getElementById('historyList');
-        const history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-        
-        if (history.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8rem;'>Historia jest pusta</p>";
-            return;
-        }
-
-        list.innerHTML = history.map(item => `
-            <div class="history-item">
-                <span class="history-name">${item.name}</span>
-                <div class="history-details">
-                    Waga: ${item.total}g → Porcje: <span class="res-highlight">${item.res1}</span><br>
-                    Nałożone: ${item.portion}g → W Fitatu: <span class="res-highlight">${item.res2}</span>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn-edit" onclick="editItem('${item.id}')">EDYTUJ</button>
-                    <button class="btn-del" onclick="deleteItem('${item.id}')">USUŃ</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    renderHistory();
-</script>
-
+    </script>
 </body>
 </html>
