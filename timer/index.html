@@ -1,143 +1,85 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer</title>
-    <style>
-        /* Ten zapis pilnuje, żeby nic nie wystawało poza ekran */
-        * { box-sizing: border-box; }
-
-        :root { --bg: #f8f9fa; --card: #ffffff; --primary: #3498db; --text: #2c3e50; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        
-        .container { max-width: 500px; margin: 0 auto; width: 100%; }
-        .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        h2 { margin: 0 0 15px 0; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
-        label { font-size: 0.85rem; font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; }
-        
-        .row { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
-        .col { flex: 1; min-width: 0; } /* min-width zapobiega rozpychaniu kolumn */
-
-        input { 
-            width: 100%; padding: 12px; border: 2px solid #edeff2; border-radius: 10px; 
-            font-size: 1rem; background: #fafafa;
-        }
-        input:focus { border-color: var(--primary); outline: none; background: #fff; }
-
-        .btn { 
-            width: 100%; padding: 15px; border: none; border-radius: 12px; 
-            font-size: 1.1rem; font-weight: bold; cursor: pointer; background: var(--primary); color: white;
-            display: block; margin: 0 auto;
-        }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-
-        /* LISTA TIMERÓW */
-        .timer-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; border: 1px solid #e1e4e8; }
-        .timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .timer-name { font-weight: bold; font-size: 1.1rem; color: var(--text); }
-        .btn-del { background: #fee2e2; color: #e74c3c; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; }
-        .timer-val { font-family: monospace; font-size: 2.2rem; font-weight: bold; color: #e74c3c; text-align: center; display: block; margin: 10px 0; }
-        .timer-footer { font-size: 0.7rem; color: #95a5a6; text-align: right; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="card">
-        <h2>Nowe Odliczanie</h2>
-        <div style="margin-bottom: 15px;">
-            <label>Co odliczamy?</label>
-            <input type="text" id="eventName" placeholder="np. Koniec meczu">
-        </div>
-        
-        <div class="row">
-            <div class="col">
-                <label>Data:</label>
-                <input type="date" id="targetDate">
-            </div>
-            <div class="col">
-                <label>Godzina:</label>
-                <input type="time" id="targetTime">
-            </div>
-        </div>
-
-        <button class="btn" onclick="addTimer()">USTAW TIMER</button>
-    </div>
-
-    <div id="timersList"></div>
-</div>
-
-<script>
-    // Ustawienie dzisiejszej daty na starcie
-    document.getElementById('targetDate').valueAsDate = new Date();
-
-    let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
-
-    function addTimer() {
-        const nameInput = document.getElementById('eventName');
-        const dateInput = document.getElementById('targetDate');
-        const timeInput = document.getElementById('targetTime');
-
-        if (!dateInput.value || !timeInput.value) return alert("Wybierz czas!");
-
-        const targetStr = `${dateInput.value}T${timeInput.value}`;
-        
-        timers.push({ id: Date.now(), name: nameInput.value || "Bez nazwy", target: targetStr });
-        localStorage.setItem('myTimers', JSON.stringify(timers));
-        
-        nameInput.value = "";
-        render();
+<style>
+    /* Reset i box-sizing na wszystko */
+    * { 
+        box-sizing: border-box; 
+        -webkit-tap-highlight-color: transparent;
     }
 
-    function remove(id) {
-        timers = timers.filter(t => t.id !== id);
-        localStorage.setItem('myTimers', JSON.stringify(timers));
-        render();
+    :root { --bg: #f8f9fa; --card: #ffffff; --primary: #3498db; --text: #2c3e50; }
+    
+    body { 
+        font-family: -apple-system, sans-serif; 
+        background: var(--bg); 
+        color: var(--text); 
+        margin: 0; 
+        padding: 10px; /* Zmniejszony padding body */
+        overflow-x: hidden; /* Blokada przesuwania na boki */
+    }
+    
+    .container { 
+        width: 100%;
+        max-width: 450px; 
+        margin: 0 auto; 
     }
 
-    function update() {
-        const now = new Date().getTime();
-        timers.forEach(t => {
-            const target = new Date(t.target).getTime();
-            const diff = target - now;
-            const el = document.getElementById(`val-${t.id}`);
-            if (el) {
-                if (diff <= 0) {
-                    el.innerText = "ZAKOŃCZONE";
-                    el.style.color = "#2ecc71";
-                } else {
-                    const h = Math.floor(diff / 3600000);
-                    const m = Math.floor((diff % 3600000) / 60000);
-                    const s = Math.floor((diff % 60000) / 1000);
-                    el.innerText = `${h}h ${m}m ${s}s`;
-                }
-            }
-        });
+    .card { 
+        background: var(--card); 
+        padding: 15px; /* Mniejszy padding wewnątrz karty */
+        border-radius: 16px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        margin-bottom: 20px;
+        width: 100%;
+    }
+    
+    h2 { margin: 0 0 15px 0; font-size: 1.1rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    label { font-size: 0.8rem; font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 4px; }
+    
+    /* Naprawa rozpychania kolumn */
+    .row { 
+        display: flex; 
+        gap: 8px; 
+        margin-bottom: 15px; 
+        width: 100%;
+    }
+    
+    .col { 
+        flex: 1; 
+        min-width: 0; /* Kluczowe: pozwala elementom się kurczyć */
     }
 
-    function render() {
-        const list = document.getElementById('timersList');
-        if (timers.length === 0) {
-            list.innerHTML = `<p style="text-align:center; color:#95a5a6; padding: 20px;">Brak aktywnych liczników</p>`;
-            return;
-        }
-
-        list.innerHTML = timers.map(t => `
-            <div class="timer-card">
-                <div class="timer-header">
-                    <span class="timer-name">${t.name}</span>
-                    <button class="btn-del" onclick="remove(${t.id})">USUŃ</button>
-                </div>
-                <span class="timer-val" id="val-${t.id}">--:--:--</span>
-                <div class="timer-footer">Cel: ${t.target.replace('T', ' ')}</div>
-            </div>
-        `).join('');
+    input { 
+        width: 100%; 
+        padding: 10px; /* Mniejszy padding wewnątrz inputów */
+        border: 2px solid #edeff2; 
+        border-radius: 8px; 
+        font-size: 0.95rem; 
+        background: #fafafa;
+        appearance: none; /* Usuwa systemowe cienie/style */
     }
+    
+    input:focus { border-color: var(--primary); outline: none; background: #fff; }
 
-    setInterval(update, 1000);
-    render();
-</script>
-</body>
-</html>
+    .btn { 
+        width: 100%; 
+        padding: 14px; 
+        border: none; 
+        border-radius: 10px; 
+        font-size: 1rem; 
+        font-weight: bold; 
+        cursor: pointer; 
+        background: var(--primary); 
+        color: white;
+        display: block;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn:active { transform: scale(0.97); }
+
+    /* LISTA */
+    .timer-card { background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 12px; border: 1px solid #e1e4e8; }
+    .timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .timer-name { font-weight: bold; font-size: 1rem; }
+    .btn-del { background: #fee2e2; color: #e74c3c; border: none; padding: 5px 8px; border-radius: 6px; font-size: 0.7rem; }
+    .timer-val { font-family: monospace; font-size: 2rem; font-weight: bold; color: #e74c3c; text-align: center; display: block; margin: 8px 0; }
+    .timer-footer { font-size: 0.65rem; color: #95a5a6; text-align: right; }
+</style>
