@@ -5,34 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer</title>
     <style>
+        /* Ten zapis pilnuje, żeby nic nie wystawało poza ekran */
+        * { box-sizing: border-box; }
+
         :root { --bg: #f8f9fa; --card: #ffffff; --primary: #3498db; --text: #2c3e50; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: 0 auto; }
+        
+        .container { max-width: 500px; margin: 0 auto; width: 100%; }
         .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
         h2 { margin: 0 0 15px 0; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; }
         label { font-size: 0.85rem; font-weight: bold; color: #7f8c8d; display: block; margin-bottom: 5px; }
         
-        .row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .col { flex: 1; }
+        .row { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
+        .col { flex: 1; min-width: 0; } /* min-width zapobiega rozpychaniu kolumn */
 
         input { 
             width: 100%; padding: 12px; border: 2px solid #edeff2; border-radius: 10px; 
-            font-size: 1rem; box-sizing: border-box; background: #fafafa;
+            font-size: 1rem; background: #fafafa;
         }
         input:focus { border-color: var(--primary); outline: none; background: #fff; }
 
         .btn { 
             width: 100%; padding: 15px; border: none; border-radius: 12px; 
-            font-size: 1rem; font-weight: bold; cursor: pointer; background: var(--primary); color: white;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; background: var(--primary); color: white;
+            display: block; margin: 0 auto;
         }
         .btn:active { transform: scale(0.98); opacity: 0.9; }
 
-        /* LISTA */
-        .timer-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); border: 1px solid #e1e4e8; }
-        .timer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .timer-name { font-weight: bold; font-size: 1.1rem; }
-        .btn-del { background: #fee2e2; color: #e74c3c; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; }
+        /* LISTA TIMERÓW */
+        .timer-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 15px; border: 1px solid #e1e4e8; }
+        .timer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .timer-name { font-weight: bold; font-size: 1.1rem; color: var(--text); }
+        .btn-del { background: #fee2e2; color: #e74c3c; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; }
         .timer-val { font-family: monospace; font-size: 2.2rem; font-weight: bold; color: #e74c3c; text-align: center; display: block; margin: 10px 0; }
         .timer-footer { font-size: 0.7rem; color: #95a5a6; text-align: right; }
     </style>
@@ -43,8 +48,8 @@
     <div class="card">
         <h2>Nowe Odliczanie</h2>
         <div style="margin-bottom: 15px;">
-            <label>Nazwa wydarzenia:</label>
-            <input type="text" id="eventName" placeholder="np. Koniec pracy">
+            <label>Co odliczamy?</label>
+            <input type="text" id="eventName" placeholder="np. Koniec meczu">
         </div>
         
         <div class="row">
@@ -53,7 +58,7 @@
                 <input type="date" id="targetDate">
             </div>
             <div class="col">
-                <label>Godzina (wpisz):</label>
+                <label>Godzina:</label>
                 <input type="time" id="targetTime">
             </div>
         </div>
@@ -65,25 +70,24 @@
 </div>
 
 <script>
-    // Ustawienie dzisiejszej daty jako domyślnej
+    // Ustawienie dzisiejszej daty na starcie
     document.getElementById('targetDate').valueAsDate = new Date();
 
     let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
 
     function addTimer() {
-        const name = document.getElementById('eventName').value || "Bez nazwy";
-        const date = document.getElementById('targetDate').value;
-        const time = document.getElementById('targetTime').value;
+        const nameInput = document.getElementById('eventName');
+        const dateInput = document.getElementById('targetDate');
+        const timeInput = document.getElementById('targetTime');
 
-        if (!date || !time) return alert("Podaj datę i godzinę!");
+        if (!dateInput.value || !timeInput.value) return alert("Wybierz czas!");
 
-        // Łączymy datę i godzinę w jeden obiekt Date
-        const targetStr = `${date}T${time}`;
+        const targetStr = `${dateInput.value}T${timeInput.value}`;
         
-        timers.push({ id: Date.now(), name, target: targetStr });
+        timers.push({ id: Date.now(), name: nameInput.value || "Bez nazwy", target: targetStr });
         localStorage.setItem('myTimers', JSON.stringify(timers));
         
-        document.getElementById('eventName').value = "";
+        nameInput.value = "";
         render();
     }
 
@@ -116,7 +120,7 @@
     function render() {
         const list = document.getElementById('timersList');
         if (timers.length === 0) {
-            list.innerHTML = `<p style="text-align:center; color:#95a5a6; margin-top:20px;">Brak aktywnych liczników</p>`;
+            list.innerHTML = `<p style="text-align:center; color:#95a5a6; padding: 20px;">Brak aktywnych liczników</p>`;
             return;
         }
 
