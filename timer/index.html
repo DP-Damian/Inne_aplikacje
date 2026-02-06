@@ -2,25 +2,19 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Timer Pro</title>
     <style>
-        /* Fundament: wszystko liczone do wewnątrz, nic nie wystaje */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body { 
             font-family: sans-serif; 
             background: #f4f7f6; 
             padding: 15px; 
             display: flex; 
             justify-content: center;
+            overflow-x: hidden;
         }
-
-        .container { 
-            width: 100%; 
-            max-width: 400px; 
-        }
-
+        .container { width: 100%; max-width: 380px; }
         .card { 
             background: white; 
             padding: 20px; 
@@ -28,10 +22,10 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
             margin-bottom: 20px;
         }
-
-        h2 { margin-bottom: 15px; font-size: 1.2rem; color: #333; }
+        h2 { margin-bottom: 15px; font-size: 1.1rem; color: #333; text-align: center; }
         label { font-size: 0.8rem; font-weight: bold; color: #666; display: block; margin-top: 10px; }
-
+        
+        /* Proste pola tekstowe, które nie rozpychają ekranu */
         input { 
             width: 100%; 
             padding: 12px; 
@@ -39,14 +33,18 @@
             border: 2px solid #ddd; 
             border-radius: 8px; 
             font-size: 1rem;
+            display: block;
         }
+
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
 
         .btn { 
             width: 100%; 
             background: #3498db; 
             color: white; 
             border: none; 
-            padding: 15px; 
+            padding: 16px; 
             border-radius: 10px; 
             font-size: 1.1rem; 
             font-weight: bold; 
@@ -54,9 +52,6 @@
             cursor: pointer;
         }
 
-        .btn:active { background: #2980b9; }
-
-        /* Lista timerów */
         .timer-item { 
             background: white; 
             padding: 15px; 
@@ -65,20 +60,12 @@
             border-left: 5px solid #3498db;
             position: relative;
         }
-
-        .t-name { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
+        .t-name { font-weight: bold; font-size: 1rem; display: block; margin-bottom: 5px; }
         .t-countdown { font-family: monospace; font-size: 1.8rem; color: #e74c3c; font-weight: bold; }
-        
         .btn-del { 
-            position: absolute; 
-            top: 10px; 
-            right: 10px; 
-            background: #ffeded; 
-            color: #e74c3c; 
-            border: none; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            font-size: 0.8rem;
+            position: absolute; top: 10px; right: 10px; 
+            background: #ffeded; color: #e74c3c; border: none; 
+            padding: 5px 10px; border-radius: 5px; font-size: 0.7rem;
         }
     </style>
 </head>
@@ -89,13 +76,18 @@
         <h2>Nowe wydarzenie</h2>
         
         <label>Nazwa:</label>
-        <input type="text" id="eventName" placeholder="np. Koniec pracy">
+        <input type="text" id="eventName" placeholder="np. Mecz PS5">
         
-        <label>Data:</label>
-        <input type="date" id="targetDate">
-        
-        <label>Godzina (wpisz ręcznie):</label>
-        <input type="time" id="targetTime">
+        <div class="row">
+            <div class="col">
+                <label>Dzień (DD.MM):</label>
+                <input type="text" id="targetDay" placeholder="06.02">
+            </div>
+            <div class="col">
+                <label>Godzina (HH:MM):</label>
+                <input type="text" id="targetTime" placeholder="20:00">
+            </div>
+        </div>
 
         <button class="btn" onclick="addTimer()">USTAW TIMER</button>
     </div>
@@ -104,27 +96,37 @@
 </div>
 
 <script>
-    // Ustawienie dzisiejszej daty na start
-    document.getElementById('targetDate').valueAsDate = new Date();
+    // Ustawienie dzisiejszej daty pomocniczo
+    const d = new Date();
+    document.getElementById('targetDay').value = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth()+1).padStart(2, '0')}`;
 
     let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
 
     function addTimer() {
         const name = document.getElementById('eventName').value || "Bez nazwy";
-        const date = document.getElementById('targetDate').value;
-        const time = document.getElementById('targetTime').value;
+        const dayMonth = document.getElementById('targetDay').value; // format DD.MM
+        const hm = document.getElementById('targetTime').value; // format HH:MM
 
-        if (!date || !time) {
-            alert("Podaj datę i godzinę!");
-            return;
+        if (!dayMonth || !hm) return alert("Wpisz datę i godzinę!");
+
+        try {
+            const [day, month] = dayMonth.split('.');
+            const [hours, minutes] = hm.split(':');
+            const year = new Date().getFullYear();
+            
+            // Tworzymy datę: rok, miesiąc (0-11), dzień, godzina, minuta
+            const targetDate = new Date(year, month - 1, day, hours, minutes);
+            
+            if (isNaN(targetDate.getTime())) throw new Error();
+
+            timers.push({ id: Date.now(), name, target: targetDate.getTime() });
+            localStorage.setItem('myTimers', JSON.stringify(timers));
+            
+            document.getElementById('targetTime').value = "";
+            render();
+        } catch (e) {
+            alert("Błędny format! Użyj DD.MM i HH:MM");
         }
-
-        const target = `${date}T${time}`;
-        timers.push({ id: Date.now(), name, target });
-        localStorage.setItem('myTimers', JSON.stringify(timers));
-        
-        document.getElementById('eventName').value = "";
-        render();
     }
 
     function remove(id) {
@@ -136,13 +138,11 @@
     function update() {
         const now = new Date().getTime();
         timers.forEach(t => {
-            const target = new Date(t.target).getTime();
-            const diff = target - now;
+            const diff = t.target - now;
             const el = document.getElementById(`count-${t.id}`);
-            
             if (el) {
                 if (diff <= 0) {
-                    el.innerText = "ZAKOŃCZONE";
+                    el.innerText = "KONIEC";
                     el.style.color = "#2ecc71";
                 } else {
                     const h = Math.floor(diff / 3600000);
@@ -157,10 +157,9 @@
     function render() {
         const list = document.getElementById('timersList');
         if (timers.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:#999;'>Brak aktywnych timerów</p>";
+            list.innerHTML = "";
             return;
         }
-
         list.innerHTML = timers.map(t => `
             <div class="timer-item">
                 <button class="btn-del" onclick="remove(${t.id})">USUŃ</button>
