@@ -3,160 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer Pro Max</title>
+    <title>Timer Ultra</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3498db">
+    <meta name="theme-color" content="#e74c3c">
     <style>
-        :root { --bg: #f0f2f5; --card: #ffffff; --primary: #3498db; --danger: #ff4757; --text: #2f3542; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: 0 auto; }
-        .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        h2 { margin: 0 0 15px 0; font-size: 1.25rem; color: var(--primary); }
-        .input-group { margin-bottom: 15px; }
-        label { font-size: 0.85rem; font-weight: 600; color: #57606f; display: block; margin-bottom: 6px; }
-        input { width: 100%; padding: 14px; border: 2px solid #edeff2; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-        .btn-main { background: var(--primary); color: white; margin-top: 10px; }
-        .btn-notif { background: #eccc68; color: #2f3542; margin-bottom: 15px; font-size: 0.8rem; }
-        .timer-card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 15px; border: 1px solid #e1e4e8; position: relative; }
-        .btn-delete { position: absolute; right: 10px; top: 10px; background: #fee2e2; color: var(--danger); border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; }
-        .timer-name { font-weight: 700; font-size: 1.1rem; display: block; margin-bottom: 10px; width: 80%; }
-        .timer-countdown { font-family: monospace; font-size: 2rem; font-weight: 800; color: var(--danger); text-align: center; background: #f8fafc; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
-        .status-done { color: #2ed573 !important; }
+        body { font-family: sans-serif; background: #fdfdfd; color: #333; margin: 0; padding: 15px; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #eee; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
+        .btn { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-add { background: #e74c3c; color: white; margin-top: 10px; }
+        .btn-test { background: #2ecc71; color: white; margin-bottom: 20px; }
+        
+        .timer-item { background: #fff; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 8px solid #e74c3c; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
+        .t-name { font-weight: bold; font-size: 1.2rem; display: block; margin-bottom: 10px; color: #2c3e50; }
+        .t-time { font-family: monospace; font-size: 2.2rem; color: #e74c3c; font-weight: 900; }
+        .btn-del { position: absolute; top: 10px; right: 10px; background: #eee; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; }
+        
+        /* Styl dla aktywnego alarmu */
+        .alarm-active { animation: shake 0.5s infinite; background: #ff7675 !important; color: white !important; }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 20% { transform: translate(-3px, 0px); } 40% { transform: translate(3px, 2px); } 100% { transform: translate(1px, -2px); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <button id="notifBtn" class="btn btn-notif" onclick="initApp()">🔔 KLIKNIJ, ABY AKTYWOWAĆ POWIADOMIENIA</button>
+    <button class="btn btn-test" onclick="startApp()">START (KLIKNIJ PO OTWARCIU!)</button>
 
     <div class="card">
-        <h2>Nowy Timer</h2>
-        <div class="input-group">
-            <label>Nazwa:</label>
-            <input type="text" id="eventName" placeholder="np. Serial o 20:00">
-        </div>
-        <div class="input-group">
-            <label>Data i godzina:</label>
-            <input type="datetime-local" id="targetTime">
-        </div>
-        <div class="input-group">
-            <label>Przypomnij wcześniej (min):</label>
-            <input type="number" id="remindBefore" value="15">
-        </div>
-        <button class="btn btn-main" onclick="addTimer()">DODAJ LICZNIK</button>
+        <input type="text" id="eventName" placeholder="Co ma się stać?">
+        <input type="datetime-local" id="targetTime">
+        <input type="number" id="remindBefore" value="5" placeholder="Ile min wcześniej przypomnieć?">
+        <button class="btn btn-add" onclick="addTimer()">USTAW TIMER</button>
     </div>
 
     <div id="timersList"></div>
-</div>
 
-<script>
-    // Rejestracja Service Workera
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
-    }
+    <script>
+        let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
+        let wakeLock = null;
 
-    let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function initApp() {
-        Notification.requestPermission().then(perm => {
-            if (perm === "granted") {
-                document.getElementById('notifBtn').style.display = 'none';
-                // Beep testowy - odblokowuje audio na telefonie
-                playBeep(440, 0.2);
-                new Notification("Timer Pro", { body: "Powiadomienia aktywne!" });
-            }
-        });
-    }
-
-    function playBeep(freq, duration) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.value = freq;
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-    }
-
-    function addTimer() {
-        const name = document.getElementById('eventName').value || "Bez nazwy";
-        const time = document.getElementById('targetTime').value;
-        const remindBefore = parseInt(document.getElementById('remindBefore').value) || 0;
-
-        if (!time) return alert("Wybierz czas!");
-
-        timers.push({ 
-            id: Date.now(), name, target: time, remindBefore, 
-            notifiedRemind: false, notifiedFinal: false 
-        });
-        localStorage.setItem('myTimers', JSON.stringify(timers));
-        renderTimers();
-    }
-
-    function deleteTimer(id) {
-        timers = timers.filter(t => t.id !== id);
-        localStorage.setItem('myTimers', JSON.stringify(timers));
-        renderTimers();
-    }
-
-    function checkTimers() {
-        const now = new Date().getTime();
-        let changed = false;
-
-        timers.forEach(t => {
-            const target = new Date(t.target).getTime();
-            const diff = target - now;
-            const remindMs = t.remindBefore * 60 * 1000;
-
-            // Przypomnienie "wcześniej"
-            if (diff <= remindMs && diff > 0 && !t.notifiedRemind && t.remindBefore > 0) {
-                new Notification(`Za ${t.remindBefore} min: ${t.name}`, { body: "Szykuj się!" });
-                playBeep(660, 0.5);
-                t.notifiedRemind = true;
-                changed = true;
-            }
-
-            // Powiadomienie końcowe
-            if (diff <= 0 && !t.notifiedFinal) {
-                new Notification("KONIEC CZASU!", { body: `Wydarzenie: ${t.name}`, requireInteraction: true });
-                playBeep(880, 1);
-                t.notifiedFinal = true;
-                changed = true;
-            }
-
-            const el = document.getElementById(`count-${t.id}`);
-            if (el) {
-                if (diff <= 0) {
-                    el.innerText = "KONIEC";
-                    el.classList.add('status-done');
-                } else {
-                    const h = Math.floor(diff / 3600000);
-                    const m = Math.floor((diff % 3600000) / 60000);
-                    const s = Math.floor((diff % 60000) / 1000);
-                    el.innerText = `${h}h ${m}m ${s}s`;
+        // 1. BLOKADA USYPIANIA EKRANU (Wake Lock)
+        async function startApp() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock aktywny - telefon nie zaśnie');
                 }
+                // Aktywacja AudioContext po kliknięciu
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                alert("Apka gotowa! Nie blokuj ekranu przyciskiem, pozwól mu działać w tle.");
+            } catch (err) {
+                console.error(err);
             }
-        });
+        }
 
-        if (changed) localStorage.setItem('myTimers', JSON.stringify(timers));
-    }
+        function playAlarm() {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.connect(gain);
+            gain.connect(context.destination);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(880, context.currentTime);
+            gain.gain.setValueAtTime(0.5, context.currentTime);
+            osc.start();
+            osc.stop(context.currentTime + 1.5);
+            
+            if ('vibrate' in navigator) navigator.vibrate([500, 200, 500, 200, 500]);
+        }
 
-    function renderTimers() {
-        const list = document.getElementById('timersList');
-        list.innerHTML = timers.map(t => `
-            <div class="timer-card">
-                <button class="btn-delete" onclick="deleteTimer(${t.id})">USUŃ</button>
-                <span class="timer-name">${t.name}</span>
-                <div class="timer-countdown" id="count-${t.id}">--:--:--</div>
-                <div style="font-size:0.7rem; color:#999">Cel: ${t.target.replace('T', ' ')}</div>
-            </div>
-        `).join('');
-    }
+        function addTimer() {
+            const name = document.getElementById('eventName').value || "Timer";
+            const target = document.getElementById('targetTime').value;
+            const remind = parseInt(document.getElementById('remindBefore').value) || 0;
+            if (!target) return;
 
-    setInterval(checkTimers, 1000);
-    renderTimers();
-</script>
+            timers.push({ id: Date.now(), name, target, remind, done: false, reminded: false });
+            localStorage.setItem('myTimers', JSON.stringify(timers));
+            render();
+        }
+
+        function render() {
+            const list = document.getElementById('timersList');
+            list.innerHTML = timers.map(t => `
+                <div class="timer-item" id="item-${t.id}">
+                    <button class="btn-del" onclick="remove(${t.id})">×</button>
+                    <span class="t-name">${t.name}</span>
+                    <div class="t-time" id="val-${t.id}">00:00:00</div>
+                </div>
+            `).join('');
+        }
+
+        function remove(id) {
+            timers = timers.filter(t => t.id !== id);
+            localStorage.setItem('myTimers', JSON.stringify(timers));
+            render();
+        }
+
+        setInterval(() => {
+            const now = new Date().getTime();
+            timers.forEach(t => {
+                const target = new Date(t.target).getTime();
+                const diff = target - now;
+                const remindMs = t.remind * 60 * 1000;
+
+                // Przypomnienie
+                if (diff <= remindMs && diff > 0 && !t.reminded) {
+                    playAlarm();
+                    t.reminded = true;
+                    localStorage.setItem('myTimers', JSON.stringify(timers));
+                }
+
+                // Koniec
+                if (diff <= 0 && !t.done) {
+                    playAlarm();
+                    t.done = true;
+                    document.getElementById(`item-${t.id}`).classList.add('alarm-active');
+                    localStorage.setItem('myTimers', JSON.stringify(timers));
+                }
+
+                const display = document.getElementById(`val-${t.id}`);
+                if (display) {
+                    if (diff <= 0) {
+                        display.innerText = "CZAS MINĄŁ!";
+                    } else {
+                        const h = Math.floor(diff / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        display.innerText = `${h}h ${m}m ${s}s`;
+                    }
+                }
+            });
+        }, 1000);
+
+        render();
+    </script>
 </body>
 </html>
