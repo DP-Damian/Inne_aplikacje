@@ -7,44 +7,55 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#27ae60">
     <style>
+        * { box-sizing: border-box; }
         body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 15px; color: #333; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { margin-top: 0; color: #2c3e50; font-size: 1.3rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        label { font-size: 0.9rem; font-weight: bold; color: #7f8c8d; }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1.1rem; background: white; }
+        label { font-size: 0.9rem; font-weight: bold; color: #7f8c8d; display: block; margin-top: 10px; }
         
-        .pot-toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px; cursor: pointer; }
+        input[type="text"], input[type="number"], select { 
+            width: 100%; padding: 12px; margin: 5px 0 15px 0; 
+            border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; background: white; 
+        }
+        
+        .pot-toggle { display: flex; align-items: center; gap: 10px; margin: 15px 0; background: #f9f9f9; padding: 10px; border-radius: 8px; cursor: pointer; }
         #potSection { display: none; background: #f0f4f7; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3498db; }
 
-        .result-container { margin-bottom: 25px; }
-        .result-label { font-size: 0.9rem; margin-bottom: 6px; display: block; font-weight: bold; color: #2c3e50; text-transform: uppercase; }
-        .result-value { background: #2c3e50; color: #2ecc71; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.9rem; text-align: center; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3); border: 2px solid #27ae60; }
+        .result-container { margin-bottom: 20px; }
+        .result-label { font-size: 0.8rem; margin-bottom: 4px; display: block; font-weight: bold; color: #2c3e50; text-transform: uppercase; }
+        .result-value { background: #2c3e50; color: #2ecc71; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.8rem; text-align: center; border: 2px solid #27ae60; }
         .netto-info { font-size: 0.8rem; color: #e67e22; text-align: center; margin-top: 5px; font-weight: bold; }
 
-        button { width: 100%; background: #27ae60; color: white; border: none; padding: 18px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:active { background: #2ecc71; transform: scale(0.97); }
+        button { width: 100%; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-save { background: #27ae60; color: white; }
+        .btn-save:active { background: #2ecc71; }
         
+        /* Historia */
         .history-item { border-bottom: 1px solid #eee; padding: 15px 0; font-size: 0.95rem; }
         .history-name { font-size: 1.1rem; color: #2c3e50; display: block; margin-bottom: 5px; }
-        .history-details { color: #555; line-height: 1.5; }
+        .history-details { color: #555; line-height: 1.5; font-size: 0.9rem; }
         .history-results { color: #27ae60; font-weight: bold; }
         .history-date { color: #aaa; font-size: 0.75rem; margin-top: 8px; display: block; }
-        .delete-btn { background: #e74c3c; padding: 10px; font-size: 0.9rem; margin-top: 20px; }
+        
+        .action-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-edit { background: #f39c12; color: white; flex: 1; padding: 10px; font-size: 0.9rem; }
+        .btn-del { background: #e74c3c; color: white; flex: 1; padding: 10px; font-size: 0.9rem; }
+        .btn-clear { background: #95a5a6; color: white; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Nowe obliczenie Fitatu</h2>
+        <h2>Kalkulator Fitatu</h2>
         <label>Nazwa dania:</label>
-        <input type="text" id="dishName" placeholder="np. Leczo">
+        <input type="text" id="dishName" placeholder="np. Kurczak ryż">
         
-        <label>Waga z wagi (g):</label>
-        <input type="number" id="totalWeight" placeholder="Wpisz co widzisz na wadze" oninput="calculate()">
+        <label>Waga całości (z wagi):</label>
+        <input type="number" id="totalWeight" placeholder="g" oninput="calculate()">
 
         <label class="pot-toggle">
             <input type="checkbox" id="usePot" onchange="togglePotSection()"> 
-            <span>Ważone z garnkiem/patelnią</span>
+            <span>Odejmij wagę garnka</span>
         </label>
 
         <div id="potSection">
@@ -55,24 +66,24 @@
         </div>
         
         <div class="result-container">
-            <span class="result-label">TO WPISZ ILOŚĆ PORCJI W DANIU:</span>
+            <span class="result-label">ILOŚĆ PORCJI W DANIU:</span>
             <div id="res1" class="result-value">-</div>
         </div>
 
-        <label>Ile chcesz zjeść (g):</label>
-        <input type="number" id="portionWeight" placeholder="np. 350" oninput="calculate()">
+        <label>Ile nakładasz sobie (g):</label>
+        <input type="number" id="portionWeight" placeholder="g" oninput="calculate()">
         <div class="result-container">
-            <span class="result-label">TO WPISZ W PORCJE W FITATU:</span>
+            <span class="result-label">WPISZ W PORCJE (FITATU):</span>
             <div id="res2" class="result-value">-</div>
         </div>
 
-        <button onclick="saveToHistory()">ZAPISZ W HISTORII</button>
+        <button class="btn-save" onclick="saveToHistory()">ZAPISZ DO HISTORII</button>
     </div>
 
     <div class="card">
         <h2>Historia</h2>
         <div id="historyList"></div>
-        <button class="delete-btn" onclick="clearHistory()">WYCZYŚĆ HISTORIĘ</button>
+        <button class="btn-clear" onclick="clearHistory()">WYCZYŚĆ WSZYSTKO</button>
     </div>
 
     <script>
@@ -80,10 +91,11 @@
             { nazwa: "Patelnia WOK", waga: 850 },
             { nazwa: "Garnek Duży (6L)", waga: 1200 },
             { nazwa: "Rondel mały", waga: 450 },
-            { nazwa: "Naczynie żaroodporne", waga: 1100 }
+            { nazwa: "Naczynie żaroodporne", waga: 1100 },
+            { nazwa: "Miska metalowa", waga: 300 }
         ];
 
-        // Inicjalizacja listy naczyń
+        // Inicjalizacja selecta
         const select = document.getElementById('potSelect');
         MOJE_GARNKI.forEach((g) => {
             let opt = document.createElement('option');
@@ -107,15 +119,12 @@
             let netto = usePot ? totalVal - potW : totalVal;
 
             if (usePot && totalVal > 0) {
-                document.getElementById('nettoDisplay').innerText = `Waga netto: ${netto}g`;
+                document.getElementById('nettoDisplay').innerText = `Netto: ${netto}g (Brutto: ${totalVal}g)`;
             } else {
                 document.getElementById('nettoDisplay').innerText = "";
             }
 
-            // Wynik 1: Waga / 10 zaokrąglona w górę
             document.getElementById('res1').innerText = netto > 0 ? Math.ceil(netto / 10) : "-";
-            
-            // Wynik 2: Porcja / 10
             document.getElementById('res2').innerText = portionVal > 0 ? (portionVal / 10) : "-";
         }
 
@@ -125,21 +134,30 @@
             const portion = document.getElementById('portionWeight').value;
             const res1 = document.getElementById('res1').innerText;
             const res2 = document.getElementById('res2').innerText;
+            
+            // Zapisujemy stan garnka, żeby móc go przywrócić przy edycji
+            const usePot = document.getElementById('usePot').checked;
+            const potVal = document.getElementById('potSelect').value;
 
             if (!total || !portion || res1 === "-" || res2 === "-") {
-                alert("Wpisz dane!");
+                alert("Wpisz wagi!");
                 return;
             }
 
             let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-            history.unshift({
+            
+            // Dodajemy unikalne ID (timestamp)
+            const newItem = {
+                id: Date.now(),
                 name, total, portion, res1, res2,
+                usePot, potVal,
                 date: new Date().toLocaleString('pl-PL')
-            });
+            };
 
+            history.unshift(newItem);
             localStorage.setItem('calcHistory', JSON.stringify(history));
             
-            // Czyścimy pola
+            // Reset
             document.getElementById('dishName').value = "";
             document.getElementById('totalWeight').value = "";
             document.getElementById('portionWeight').value = "";
@@ -147,8 +165,46 @@
             renderHistory();
         }
 
+        function editItem(id) {
+            let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
+            const item = history.find(i => i.id === id);
+
+            if (item) {
+                // Wczytanie danych do formularza
+                document.getElementById('dishName').value = item.name;
+                document.getElementById('totalWeight').value = item.total;
+                document.getElementById('portionWeight').value = item.portion;
+
+                // Logika garnka - odtwarzamy stan
+                const checkbox = document.getElementById('usePot');
+                checkbox.checked = item.usePot || false; // obsługa starych wpisów
+                togglePotSection();
+                
+                if (item.usePot && item.potVal) {
+                    document.getElementById('potSelect').value = item.potVal;
+                }
+
+                calculate();
+
+                // Usuwamy edytowany element z historii (bo zaraz go zapiszemy jako nowy/poprawiony)
+                deleteItem(id, false); 
+                
+                // Przewiń do góry
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function deleteItem(id, confirmDel = true) {
+            if (confirmDel && !confirm("Usunąć ten wpis?")) return;
+
+            let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('calcHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
         function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
+            let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
             const list = document.getElementById('historyList');
             
             if (history.length === 0) {
@@ -156,20 +212,30 @@
                 return;
             }
 
+            // Naprawa starych wpisów bez ID (gdyby jakieś zostały)
+            history = history.map(item => {
+                if (!item.id) item.id = Math.floor(Math.random() * 1000000);
+                return item;
+            });
+
             list.innerHTML = history.map(item => `
                 <div class="history-item">
                     <strong class="history-name">${item.name}</strong>
                     <div class="history-details">
-                        Całość: ${item.total}g → Porcji: <span class="history-results">${item.res1}</span><br>
-                        Zjesz: ${item.portion}g → W Fitatu: <span class="history-results">${item.res2}</span>
+                        Całość: ${item.total}g → Porcje w daniu: <span class="history-results">${item.res1}</span><br>
+                        Twoja porcja: ${item.portion}g → Wpisz w Fitatu: <span class="history-results">${item.res2}</span>
                     </div>
                     <span class="history-date">${item.date}</span>
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="editItem(${item.id})">EDYTUJ</button>
+                        <button class="btn-del" onclick="deleteItem(${item.id})">USUŃ</button>
+                    </div>
                 </div>
             `).join('');
         }
 
         function clearHistory() {
-            if(confirm("Wyczyścić historię?")) {
+            if(confirm("Usunąć całą historię?")) {
                 localStorage.removeItem('calcHistory');
                 renderHistory();
             }
