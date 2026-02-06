@@ -128,7 +128,6 @@
 
             let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
             
-            // Tworzymy unikalne ID na bazie czasu
             const newItem = {
                 id: Date.now(),
                 name, total, portion, res1, res2, usePot, potVal
@@ -137,22 +136,16 @@
             history.unshift(newItem);
             localStorage.setItem('calcHistory', JSON.stringify(history));
             
-            // Resetuj pola
-            document.getElementById('dishName').value = "";
-            document.getElementById('totalWeight').value = "";
-            document.getElementById('portionWeight').value = "";
-            document.getElementById('usePot').checked = false;
-            togglePotSection();
             renderHistory();
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
         function editItem(id) {
             let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
-            // Znajdź wpis po ID
             const item = history.find(x => x.id === id);
 
             if (item) {
-                // Wstaw dane do pól
+                // KOPIUJEMY DANE DO FORMULARZA (HISTORIA ZOSTAJE)
                 document.getElementById('dishName').value = item.name;
                 document.getElementById('totalWeight').value = item.total;
                 document.getElementById('portionWeight').value = item.portion;
@@ -162,19 +155,13 @@
                 togglePotSection();
                 calculate();
 
-                // Usuń stary wpis z historii
-                history = history.filter(x => x.id !== id);
-                localStorage.setItem('calcHistory', JSON.stringify(history));
-                
-                renderHistory();
+                // PRZEWIŃ NA GÓRĘ ŻEBY EDYTOWAĆ
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-                alert("Błąd edycji!");
             }
         }
 
         function deleteItem(id) {
-            if (!confirm("Usunąć?")) return;
+            if (!confirm("Usunąć ten wpis z historii?")) return;
             let history = JSON.parse(localStorage.getItem('calcHistory') || "[]");
             history = history.filter(x => x.id !== id);
             localStorage.setItem('calcHistory', JSON.stringify(history));
