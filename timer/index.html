@@ -2,119 +2,83 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer</title>
     <style>
-        /* 1. CAŁKOWITY RESET - usuwamy wszystko, co mogłoby rozpychać stronę */
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
+        /* Fundament: wszystko liczone do wewnątrz, nic nie wystaje */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: sans-serif; 
+            background: #f4f7f6; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center;
         }
 
-        html, body {
-            width: 100%;
-            overflow-x: hidden; /* Blokada przesuwania na boki */
-            background: #f4f7f6;
-            font-family: sans-serif;
+        .container { 
+            width: 100%; 
+            max-width: 400px; 
         }
 
-        body {
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* 2. KONTENER - sztywna maksymalna szerokość, ale nigdy więcej niż ekran */
-        .container {
-            width: 100%;
-            max-width: 400px; /* Dla większych ekranów */
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
             margin-bottom: 20px;
         }
 
-        h2 { 
-            font-size: 1.1rem; 
-            margin-bottom: 15px; 
-            color: #333; 
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
+        h2 { margin-bottom: 15px; font-size: 1.2rem; color: #333; }
+        label { font-size: 0.8rem; font-weight: bold; color: #666; display: block; margin-top: 10px; }
 
-        /* 3. POLA FORMULARZA - każde w swojej linii, by nic nie walczyło o miejsce */
-        .input-box {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        input {
-            width: 100%; /* MUSI mieć 100% szerokości rodzica */
-            display: block;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 5px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
             font-size: 1rem;
-            background: #fff;
-            -webkit-appearance: none; /* Usuwa style systemowe iOS/Android */
         }
 
-        /* 4. PRZYCISK - teraz nie ma opcji, żeby uciekł */
-        .btn {
-            width: 100%;
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
+        .btn { 
+            width: 100%; 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            margin-top: 20px;
             cursor: pointer;
-            margin-top: 5px;
         }
 
         .btn:active { background: #2980b9; }
 
-        /* 5. LISTA TIMERÓW */
-        .timer-item {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
+        /* Lista timerów */
+        .timer-item { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
             border-left: 5px solid #3498db;
             position: relative;
-            width: 100%;
         }
 
-        .t-name { font-weight: bold; display: block; margin-bottom: 5px; color: #333; }
+        .t-name { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; }
         .t-countdown { font-family: monospace; font-size: 1.8rem; color: #e74c3c; font-weight: bold; }
         
-        .btn-del {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ffeded;
-            color: #e74c3c;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.7rem;
+        .btn-del { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            background: #ffeded; 
+            color: #e74c3c; 
+            border: none; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            font-size: 0.8rem;
         }
     </style>
 </head>
@@ -124,20 +88,14 @@
     <div class="card">
         <h2>Nowe wydarzenie</h2>
         
-        <div class="input-box">
-            <label>Nazwa:</label>
-            <input type="text" id="eventName" placeholder="np. Koniec pracy">
-        </div>
+        <label>Nazwa:</label>
+        <input type="text" id="eventName" placeholder="np. Koniec pracy">
         
-        <div class="input-box">
-            <label>Data:</label>
-            <input type="date" id="targetDate">
-        </div>
+        <label>Data:</label>
+        <input type="date" id="targetDate">
         
-        <div class="input-box">
-            <label>Godzina:</label>
-            <input type="time" id="targetTime">
-        </div>
+        <label>Godzina (wpisz ręcznie):</label>
+        <input type="time" id="targetTime">
 
         <button class="btn" onclick="addTimer()">USTAW TIMER</button>
     </div>
@@ -146,7 +104,7 @@
 </div>
 
 <script>
-    // Ustawienie dzisiejszej daty
+    // Ustawienie dzisiejszej daty na start
     document.getElementById('targetDate').valueAsDate = new Date();
 
     let timers = JSON.parse(localStorage.getItem('myTimers') || "[]");
@@ -157,7 +115,7 @@
         const time = document.getElementById('targetTime').value;
 
         if (!date || !time) {
-            alert("Uzupełnij datę i godzinę!");
+            alert("Podaj datę i godzinę!");
             return;
         }
 
@@ -199,7 +157,7 @@
     function render() {
         const list = document.getElementById('timersList');
         if (timers.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:#999; margin-top:10px;'>Brak aktywnych timerów</p>";
+            list.innerHTML = "<p style='text-align:center; color:#999;'>Brak aktywnych timerów</p>";
             return;
         }
 
