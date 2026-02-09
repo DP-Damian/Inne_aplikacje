@@ -14,7 +14,6 @@
         body { background: #f4f7f6; padding: 15px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 450px; }
         
-        /* Wyszukiwarka przyklejona do góry */
         .search-container { position: sticky; top: 10px; z-index: 1000; margin-bottom: 20px; }
         #search { 
             width: 100%; padding: 15px; border: 2px solid #3498db; 
@@ -36,7 +35,6 @@
         .btn:active { transform: scale(0.98); }
         .btn:disabled { background: #bdc3c7; }
 
-        /* Styl listy przedmiotów */
         .item-row { 
             background: white; padding: 15px; border-radius: 10px; 
             margin-bottom: 10px; border-left: 5px solid #e67e22;
@@ -48,10 +46,7 @@
         .item-loc { color: #e67e22; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; }
         
         .btn-del { background: #ff7675; padding: 8px 12px; font-size: 0.75rem; width: auto; margin-top: 0; border-radius: 6px; }
-
-        .status { text-align: center; color: #95a5a6; font-size: 0.75rem; margin-top: 10px; font-weight: bold; }
-        
-        .syncing { color: #3498db; }
+        .status { text-align: center; color: #95a5a6; font-size: 0.75rem; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -70,7 +65,7 @@
         <input type="text" id="itemLoc" placeholder="np. Szuflada w przedpokoju">
         
         <button id="addBtn" class="btn" onclick="addItem()">DODAJ PRZEDMIOT</button>
-        <div id="statusMsg" class="status">Czekam na dane...</div>
+        <div id="statusMsg" class="status"></div>
     </div>
 
     <div id="itemList"></div>
@@ -80,38 +75,32 @@
     // --- KONFIGURACJA ---
     const API_URL = 'https://script.google.com/macros/s/AKfycbwFUtiJNmy5MkD9Lg06_x9_N46aY12LggiPyAXv-uhI1oKO-g-JJ6BIl_jWB8TV5_xHHg/exec'; 
     
-    // Załaduj z pamięci lokalnej na start, żeby nie było pusto
     let allItems = JSON.parse(localStorage.getItem('schowek_cache') || "[]");
     renderList(allItems);
 
-    // Główna funkcja pobierania danych
     async function loadItems(isSilent = false) {
-        if (!isSilent) {
-            document.getElementById('statusMsg').innerHTML = '<span class="syncing">🔄 Synchronizacja...</span>';
+        if (!isSilent && allItems.length === 0) {
+            document.getElementById('statusMsg').innerText = "Pobieranie danych...";
         }
         
         try {
             const response = await fetch(API_URL);
             const data = await response.json();
             
-            // Mapowanie: Kolumna A(0)=Data, B(1)=Przedmiot, C(2)=Miejsce
             const newItems = data.map(row => ({ 
                 id: row[0], 
                 name: row[1], 
                 location: row[2] 
-            })).reverse(); // Najnowsze na górze
+            })).reverse();
 
-            // Odśwież listę tylko jeśli są faktyczne zmiany (oszczędność baterii i ekranu)
             if (JSON.stringify(newItems) !== JSON.stringify(allItems)) {
                 allItems = newItems;
                 localStorage.setItem('schowek_cache', JSON.stringify(allItems));
                 renderList(allItems);
             }
-            
-            document.getElementById('statusMsg').innerText = "✅ Dane aktualne (Dzielone z Żoną)";
+            document.getElementById('statusMsg').innerText = "";
         } catch (error) {
-            document.getElementById('statusMsg').innerText = "⚠️ Błąd synchro (tryb offline)";
-            console.error(error);
+            document.getElementById('statusMsg').innerText = "Tryb offline";
         }
     }
 
@@ -144,60 +133,63 @@
     async function addItem() {
         const nameInput = document.getElementById('itemName');
         const locInput = document.getElementById('itemLoc');
-        const btn = document.getElementById('addBtn');
-
-        if (!nameInput.value || !locInput.value) {
-            alert("Wpisz nazwę i miejsce!");
-            return;
-        }
+        
+        if (!nameInput.value || !locInput.value) return;
 
         const name = nameInput.value;
         const loc = locInput.value;
+        const tempId = new Date().toISOString(); // Tymczasowe ID
 
-        btn.disabled = true;
-        document.getElementById('statusMsg').innerText = "🚀 Wysyłanie do bazy...";
+        // --- NATYCHMIASTOWA AKTUALIZACJA LOKALNA ---
+        const newItem = { id: tempId, name: name, location: loc };
+        allItems.unshift(newItem);
+        localStorage.setItem('schowek_cache', JSON.stringify(allItems));
+        renderList(allItems);
 
+        // Czyszczenie pól
+        nameInput.value = "";
+        locInput.value = "";
+        document.getElementById('statusMsg').innerText = "Zapisywanie...";
+
+        // --- WYSYŁKA W TLE ---
         try {
             await fetch(API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ item: name, location: loc }) 
             });
-
-            nameInput.value = "";
-            locInput.value = "";
-            // Pobierz świeże dane z serwera po dodaniu
-            await loadItems(true); 
+            document.getElementById('statusMsg').innerText = "";
+            // Po 1 sekundzie pobieramy dane z serwera, żeby mieć oficjalne ID
+            setTimeout(() => loadItems(true), 1000);
         } catch (e) {
-            alert("Błąd zapisu. Sprawdź internet.");
-        } finally {
-            btn.disabled = false;
+            document.getElementById('statusMsg').innerText = "Błąd zapisu (spróbuję później)";
         }
     }
 
     async function deleteItem(id) {
-        if (!confirm("Usunąć ten wpis u wszystkich?")) return;
+        if (!confirm("Usunąć ten wpis?")) return;
         
-        document.getElementById('statusMsg').innerText = "🗑️ Usuwanie...";
+        // --- NATYCHMIASTOWE USUNIĘCIE LOKALNE ---
+        allItems = allItems.filter(i => i.id !== id);
+        localStorage.setItem('schowek_cache', JSON.stringify(allItems));
+        renderList(allItems);
+
+        // --- USUNIĘCIE W TLE ---
         try {
             await fetch(API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ action: "delete", id: id }) 
             });
-            await loadItems(true);
         } catch (e) {
-            alert("Błąd przy usuwaniu.");
+            alert("Błąd połączenia. Odśwież, aby zsynchronizować.");
+            loadItems(true);
         }
     }
 
     // --- AUTOMATYKA ---
-
-    // 1. Pierwsze ładowanie
     loadItems();
-
-    // 2. Co 30 sekund sprawdź czy żona coś dodała
+    // Co 30 sekund synchronizuj zmiany w tle (np. od żony)
     setInterval(() => loadItems(true), 30000);
-
-    // 3. Sprawdź zmiany zawsze gdy wracasz do aplikacji
+    // Synchronizuj przy każdym powrocie do apki
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") loadItems(true);
     });
