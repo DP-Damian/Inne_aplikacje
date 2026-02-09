@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Baza Schowek</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    <link rel="apple-touch-icon" href="icon.png">
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
         body { background: #f4f7f6; padding: 15px; display: flex; justify-content: center; }
@@ -12,7 +17,6 @@
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h2 { margin-bottom: 15px; font-size: 1.1rem; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; }
         
-        /* Sticky Search */
         .search-container { position: sticky; top: 10px; z-index: 1000; }
         #search { 
             width: 100%; padding: 15px; border: 2px solid #3498db; 
@@ -28,17 +32,16 @@
             padding: 16px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; 
             margin-top: 15px; cursor: pointer; transition: 0.2s;
         }
-        .btn:active { transform: scale(0.98); background: #27ae60; }
-        .btn:disabled { background: #bdc3c7; }
+        .btn:active { transform: scale(0.98); }
+        .btn-del { background: #ff7675; padding: 8px 12px; font-size: 0.8rem; margin-top: 5px; width: auto; align-self: flex-end; }
 
-        /* Lista przedmiotów */
         .item-row { 
             background: white; padding: 15px; border-radius: 10px; 
             margin-bottom: 10px; border-left: 5px solid #e67e22;
-            display: flex; flex-direction: column; gap: 5px;
+            display: flex; flex-direction: column; position: relative;
         }
         .item-name { font-weight: bold; color: #2c3e50; font-size: 1.1rem; }
-        .item-loc { color: #e67e22; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; }
+        .item-loc { color: #e67e22; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
         
         .status { text-align: center; color: #95a5a6; font-size: 0.8rem; margin-top: 10px; }
     </style>
@@ -55,11 +58,9 @@
     <div class="card">
         <h2>Nowy wpis: Baza_schowek</h2>
         <label>Co chowasz?</label>
-        <input type="text" id="itemName" placeholder="np. Kabel HDMI">
-        
+        <input type="text" id="itemName" placeholder="np. Klucze do garażu">
         <label>Gdzie to jest?</label>
-        <input type="text" id="itemLoc" placeholder="np. Pudło nr 3 pod łóżkiem">
-        
+        <input type="text" id="itemLoc" placeholder="np. Szuflada w przedpokoju">
         <button id="addBtn" class="btn" onclick="addItem()">DODAJ PRZEDMIOT</button>
         <div id="statusMsg" class="status"></div>
     </div>
@@ -68,41 +69,33 @@
 </div>
 
 <script>
-    // --- KONFIGURACJA ---
     const API_URL = 'https://script.google.com/macros/s/AKfycbwFUtiJNmy5MkD9Lg06_x9_N46aY12LggiPyAXv-uhI1oKO-g-JJ6BIl_jWB8TV5_xHHg/exec'; 
     let allItems = [];
 
-    // Pobieranie danych
     async function loadItems() {
         document.getElementById('statusMsg').innerText = "Ładowanie danych...";
         try {
             const response = await fetch(API_URL);
             const data = await response.json();
-            // Mapowanie: Kolumna B (1) to Przedmiot, Kolumna C (2) to Miejsce
-            allItems = data.map(row => ({ name: row[1], location: row[2] })).reverse();
+            allItems = data.map(row => ({ id: row[0], name: row[1], location: row[2] })).reverse();
             renderList(allItems);
             document.getElementById('statusMsg').innerText = "Baza gotowa.";
         } catch (error) {
-            document.getElementById('statusMsg').innerText = "Błąd połączenia z Baza_schowek.";
+            document.getElementById('statusMsg').innerText = "Błąd bazy.";
         }
     }
 
-    // Wyświetlanie listy
     function renderList(items) {
         const list = document.getElementById('itemList');
-        if (items.length === 0) {
-            list.innerHTML = "<p style='text-align:center; color:#999;'>Nic nie znaleziono.</p>";
-            return;
-        }
         list.innerHTML = items.map(i => `
             <div class="item-row">
                 <span class="item-name">${i.name}</span>
                 <span class="item-loc">📍 ${i.location}</span>
+                <button class="btn btn-del" onclick="deleteItem('${i.id}')">USUŃ</button>
             </div>
         `).join('');
     }
 
-    // Szybkie filtrowanie
     function filterItems() {
         const term = document.getElementById('search').value.toLowerCase();
         const filtered = allItems.filter(i => 
@@ -112,42 +105,24 @@
         renderList(filtered);
     }
 
-    // Dodawanie do Google Sheets
     async function addItem() {
         const name = document.getElementById('itemName').value;
         const loc = document.getElementById('itemLoc').value;
-        const btn = document.getElementById('addBtn');
+        if (!name || !loc) return;
+        
+        document.getElementById('addBtn').disabled = true;
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ item: name, location: loc }) });
+        location.reload(); // Najprostszy sposób na odświeżenie ID z bazy
+    }
 
-        if (!name || !loc) return alert("Wpisz przedmiot i miejsce!");
-
-        btn.disabled = true;
-        btn.innerText = "ZAPISYWANIE...";
-
-        try {
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ item: name, location: loc })
-            });
-
-            document.getElementById('itemName').value = "";
-            document.getElementById('itemLoc').value = "";
-            
-            // Dodaj lokalnie na górę, żeby od razu było widać
-            allItems.unshift({ name: name, location: loc });
-            renderList(allItems);
-            
-            btn.disabled = false;
-            btn.innerText = "DODAJ PRZEDMIOT";
-            document.getElementById('statusMsg').innerText = "Zapisano pomyślnie!";
-        } catch (e) {
-            alert("Błąd zapisu do Google Sheets.");
-            btn.disabled = false;
-            btn.innerText = "DODAJ PRZEDMIOT";
-        }
+    async function deleteItem(id) {
+        if (!confirm("Usunąć ten wpis?")) return;
+        document.getElementById('statusMsg').innerText = "Usuwanie...";
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "delete", id: id }) });
+        loadItems();
     }
 
     loadItems();
 </script>
-
 </body>
 </html>
