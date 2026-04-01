@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalorie Tygodniowe</title>
+    <style>
+        :root {
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --primary: #2ecc71;
+            --secondary: #e74c3c;
+            --text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h2 { text-align: center; margin-bottom: 25px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th { background: #f8f9fa; font-size: 0.9em; text-transform: uppercase; }
+
+        input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1em;
+        }
+
+        .net-value { font-weight: bold; }
+        .deficit { color: var(--primary); } /* Zielony = deficyt (mało zjedzone) */
+        .surplus { color: var(--secondary); } /* Czerwony = nadwyżka */
+
+        .summary-row {
+            background: #f8f9fa;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-clear { background: #95a5a6; color: white; }
+        .btn-clear:hover { background: #7f8c8d; }
+
+        @media (max-width: 600px) {
+            input { width: 60px; }
+            th, td { padding: 8px 4px; font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 Podsumowanie Kalorii</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Dzień</th>
+                <th>Spożyte (kcal)</th>
+                <th>Spalone (kcal)</th>
+                <th>Bilans</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            </tbody>
+        <tfoot>
+            <tr class="summary-row">
+                <td>SUMA</td>
+                <td id="total-consumed">0</td>
+                <td id="total-burned">0</td>
+                <td id="total-net">0</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="buttons">
+        <button class="btn-clear" onclick="clearData()">🗑️ Wyczyść wszystko</button>
+    </div>
+</div>
+
+<script>
+    const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
+    const tbody = document.getElementById('table-body');
+
+    // Inicjalizacja tabeli
+    function init() {
+        let savedData = JSON.parse(localStorage.getItem('calData')) || {};
+        
+        days.forEach((day, index) => {
+            const rowData = savedData[index] || { consumed: '', burned: '' };
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${day}</td>
+                <td><input type="number" value="${rowData.consumed}" oninput="update(${index}, 'consumed', this.value)" placeholder="0"></td>
+                <td><input type="number" value="${rowData.burned}" oninput="update(${index}, 'burned', this.value)" placeholder="0"></td>
+                <td id="net-${index}" class="net-value">0</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        calculate();
+    }
+
+    // Aktualizacja danych
+    function update(index, type, value) {
+        let savedData = JSON.parse(localStorage.getItem('calData')) || {};
+        if (!savedData[index]) savedData[index] = { consumed: 0, burned: 0 };
+        savedData[index][type] = value;
+        localStorage.setItem('calData', JSON.stringify(savedData));
+        calculate();
+    }
+
+    // Obliczenia
+    function calculate() {
+        let savedData = JSON.parse(localStorage.getItem('calData')) || {};
+        let tConsumed = 0;
+        let tBurned = 0;
+
+        days.forEach((_, index) => {
+            const d = savedData[index] || { consumed: 0, burned: 0 };
+            const consumed = parseFloat(d.consumed) || 0;
+            const burned = parseFloat(d.burned) || 0;
+            const net = consumed - burned;
+
+            const netCell = document.getElementById(`net-${index}`);
+            netCell.innerText = net > 0 ? `+${net}` : net;
+            
+            // Kolorowanie: ujemny bilans (zjadłeś mniej niż spaliłeś) = zielony (deficyt)
+            netCell.className = 'net-value ' + (net <= 0 ? 'deficit' : 'surplus');
+
+            tConsumed += consumed;
+            tBurned += burned;
+        });
+
+        const totalNet = tConsumed - tBurned;
+        document.getElementById('total-consumed').innerText = tConsumed;
+        document.getElementById('total-burned').innerText = tBurned;
+        document.getElementById('total-net').innerText = totalNet > 0 ? `+${totalNet}` : totalNet;
+        document.getElementById('total-net').className = totalNet <= 0 ? 'deficit' : 'surplus';
+    }
+
+    // Czyszczenie
+    function clearData() {
+        if(confirm("Na pewno wyczyścić cały tydzień?")) {
+            localStorage.removeItem('calData');
+            location.reload();
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>
